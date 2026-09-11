@@ -33,9 +33,9 @@
 
 | Уровень | № | Задание | Раздел | Код | Тесты | Коммиты |
 |---|---|---|---|---|---|---|
-| Средний | 4 | Класс «Фигура» (площадь, периметр) | [1](#1-класс-фигура-средняя-4) | [`shapes.py`](shapelab/shapes.py): `Shape`, `Circle`, `Rectangle`, `Square`, `Triangle` | [`test_shapes.py`](tests/test_shapes.py) | `2e52932`, `8bc29c2` |
+| Средний | 4 | Класс «Фигура» (площадь, периметр) | [1](#1-класс-фигура-средняя-4) | [`shapes.py`](shapelab/shapes.py): `Shape`, `Circle`, `Rectangle`, `Square`, `Triangle` | [`test_shapes.py`](tests/test_shapes.py) | `2e52932`, `8bc29c2`, `579034f` |
 | Средний | 6 | Класс со статическим методом | [2](#2-класс-со-статическим-методом-средняя-6) | [`shapes.py`](shapelab/shapes.py): `Triangle.is_valid` | [`test_triangle.py`](tests/test_triangle.py) | `8bc29c2` |
-| Средний | 10 | Класс-итератор | [3](#3-класс-итератор-средняя-10) | [`drawing.py`](shapelab/drawing.py): `Drawing`, `DrawingIterator` | [`test_drawing.py`](tests/test_drawing.py) | `487b605` |
+| Средний | 10 | Класс-итератор | [3](#3-класс-итератор-средняя-10) | [`drawing.py`](shapelab/drawing.py): `Drawing`, `DrawingIterator` | [`test_drawing.py`](tests/test_drawing.py) | `487b605`, `2536278`, `101ed5b` |
 | Повышенный | 5 | Класс для сериализации объектов в JSON | [4](#4-сериализация-объектов-в-json-повышенная-5) | [`serializer.py`](shapelab/serializer.py): `JsonSerializer` | [`test_serializer.py`](tests/test_serializer.py) | `7bc1780` |
 | Повышенный | 9 | Абстрактный класс через `abc` | [5](#5-абстрактные-классы-abc-повышенная-9) | `Shape` в [`shapes.py`](shapelab/shapes.py), `Serializable` в [`serializer.py`](shapelab/serializer.py) | [`test_shapes.py`](tests/test_shapes.py), [`test_serializer.py`](tests/test_serializer.py) | `2e52932`, `7bc1780` |
 
@@ -144,8 +144,8 @@ python -m shapelab.demo reports/demo.txt    # пересоздать прото�
 на которых он получен. Тест `test_committed_report_is_up_to_date` сравнивает сессии
 из файла со свежим прогоном, так что протокол не может незаметно разойтись с кодом.
 Протокол и вывод тестов в этом README обновлены последним коммитом: в штампе указана
-ревизия `6f3ab00`, после которой изменены только `reports/demo.txt` и `README.md`
-(проверка: `git log --stat 6f3ab00..main`).
+ревизия `101ed5b`, после которой изменены только `reports/demo.txt` и `README.md`
+(проверка: `git log --stat 101ed5b..main`).
 
 Примеры в документации классов (`>>> Triangle.is_valid(1, 2, 3)` и т. п.) — это
 doctest: [`tests/test_doctests.py`](tests/test_doctests.py) выполняет их вместе с
@@ -545,7 +545,7 @@ Singleton, Factory и Strategy отдельно не реализованы.
 ```
 $ python -m unittest -q
 ----------------------------------------------------------------------
-Ran 134 tests in 0.458s
+Ran 145 tests in 0.507s
 
 OK
 $ python -m flake8 shapelab tests
