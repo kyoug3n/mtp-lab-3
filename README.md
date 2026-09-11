@@ -143,6 +143,9 @@ python -m shapelab.demo reports/demo.txt    # пересоздать прото�
 В начале [`reports/demo.txt`](reports/demo.txt) записаны команда, ревизия и версия Python,
 на которых он получен. Тест `test_committed_report_is_up_to_date` сравнивает сессии
 из файла со свежим прогоном, так что протокол не может незаметно разойтись с кодом.
+Протокол и вывод тестов в этом README обновлены последним коммитом: в штампе указана
+ревизия `6f3ab00`, после которой изменены только `reports/demo.txt` и `README.md`
+(проверка: `git log --stat 6f3ab00..main`).
 
 Примеры в документации классов (`>>> Triangle.is_valid(1, 2, 3)` и т. п.) — это
 doctest: [`tests/test_doctests.py`](tests/test_doctests.py) выполняет их вместе с
@@ -519,7 +522,7 @@ Singleton, Factory и Strategy отдельно не реализованы.
 ```
 $ python -m unittest -q
 ----------------------------------------------------------------------
-Ran 134 tests in 0.467s
+Ran 134 tests in 0.458s
 
 OK
 $ python -m flake8 shapelab tests
