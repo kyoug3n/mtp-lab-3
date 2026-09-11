@@ -13,11 +13,13 @@
 """
 import math
 from collections.abc import Iterable
+from typing import Any
 
+from shapelab.serializer import Serializable
 from shapelab.shapes import Shape
 
 
-class Drawing:
+class Drawing(Serializable):
     """Чертёж: фигуры в порядке добавления.
 
     >>> from shapelab.shapes import Circle, Square
@@ -65,6 +67,22 @@ class Drawing:
             return math.fsum(shape.area() for shape in self)
         except OverflowError:
             return math.inf
+
+    def to_dict(self) -> dict[str, Any]:
+        """Поля для JSON: список фигур (их запишет сериализатор)."""
+        return {"shapes": list(self)}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Drawing":
+        """Создать чертёж из списка уже восстановленных фигур.
+
+        :raises TypeError: если ``shapes`` не список или в нём не фигуры.
+        """
+        cls.check_fields(data, ["shapes"])
+        shapes = data["shapes"]
+        if not isinstance(shapes, list):
+            raise TypeError("поле «shapes» должно быть списком фигур")
+        return cls(shapes)
 
     def __iter__(self) -> "DrawingIterator":
         return DrawingIterator(self)

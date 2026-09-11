@@ -12,9 +12,11 @@
 Средн. 6 — статический метод :meth:`Triangle.is_valid`.
 """
 import math
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from fractions import Fraction
-from typing import ClassVar
+from typing import Any, ClassVar
+
+from shapelab.serializer import Serializable
 
 Number = int | float
 
@@ -33,14 +35,17 @@ def format_number(value: Number, significant: int = 6) -> str:
     return f"{value:.{significant}g}"
 
 
-class Shape(ABC):
+class Shape(Serializable):
     """Абстрактная фигура: у всякой фигуры есть площадь и периметр.
 
     Наследник обязан реализовать :meth:`area` и :meth:`perimeter` и задать
     атрибуты класса ``NAME`` (название для вывода) и ``SIZE_LABELS``
     (имена параметров конструктора → подписи). Для каждого имени из
     ``SIZE_LABELS`` у фигуры должно быть одноимённое свойство. Остальное —
-    описание, сравнение, ``repr`` — базовый класс делает сам.
+    описание, сравнение, ``repr``, запись в JSON и чтение из него —
+    базовый класс делает сам. Абстрактные методы ``to_dict`` и ``from_dict``
+    унаследованного контракта :class:`Serializable` реализованы здесь, в
+    ``Shape``, один раз для всех фигур.
 
     >>> Shape()  # doctest: +ELLIPSIS
     Traceback (most recent call last):
@@ -91,6 +96,26 @@ class Shape(ABC):
         {'width': 3, 'height': 4}
         """
         return {name: getattr(self, name) for name in self.SIZE_LABELS}
+
+    def to_dict(self) -> dict[str, Any]:
+        """Поля для JSON — размеры фигуры."""
+        return self.sizes()
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Shape":
+        """Создать фигуру класса ``cls`` по размерам из JSON.
+
+        Размеры проверяет конструктор, как и при обычном создании.
+
+        >>> Square.from_dict({"side": 2})
+        Square(side=2)
+        >>> Square.from_dict({"sid": 2})
+        Traceback (most recent call last):
+        ...
+        ValueError: нет поля «side»
+        """
+        cls.check_fields(data, cls.SIZE_LABELS)
+        return cls(**data)
 
     def describe(self) -> str:
         """Описание для вывода: название, размеры, площадь и периметр.
