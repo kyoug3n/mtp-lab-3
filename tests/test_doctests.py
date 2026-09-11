@@ -2,9 +2,9 @@
 import doctest
 import unittest
 
-from shapelab import shapes
+from shapelab import drawing, shapes
 
-MODULES = [shapes]
+MODULES = [shapes, drawing]
 
 
 def load_tests(
