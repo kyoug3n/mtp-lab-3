@@ -2,9 +2,9 @@
 import doctest
 import unittest
 
-from shapelab import drawing, serializer, shapes
+from shapelab import console, drawing, serializer, shapes
 
-MODULES = [shapes, drawing, serializer]
+MODULES = [shapes, drawing, serializer, console]
 
 
 def load_tests(
