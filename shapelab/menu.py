@@ -10,6 +10,7 @@
 каждого класса. Новая фигура появится в меню, если добавить её класс в
 этот список.
 """
+import math
 from collections.abc import Callable
 from pathlib import Path
 
@@ -115,9 +116,11 @@ class ShapeMenu:
         self._output(f"Фигур на чертеже: {len(self.drawing)}")
         for number, shape in enumerate(self.drawing, start=1):
             self._output(f"  {number}. {shape.describe()}")
-        self._output(
-            f"Общая площадь: {format_number(self.drawing.total_area())}"
-        )
+        total = self.drawing.total_area()
+        if total == math.inf:
+            self._output("Общая площадь: больше 1e308")
+        else:
+            self._output(f"Общая площадь: {format_number(total)}")
 
     def save(self) -> None:
         """Записать чертёж в JSON-файл."""

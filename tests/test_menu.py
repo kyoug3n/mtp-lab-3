@@ -142,6 +142,14 @@ class ShowDrawingTests(MenuTestCase):
             "Общая площадь: 10",
         ])
 
+    def test_overflowing_total_area(self) -> None:
+        # Каждый квадрат допустим, а их общая площадь больше 1e308.
+        drawing = Drawing([Square(1e154), Square(1e154)])
+        _, console = self.run_menu([SHOW], drawing)
+        self.assertIn("  1. Квадрат (сторона = 1e+154): площадь 1e+308, "
+                      "периметр 4e+154", console.transcript)
+        self.assertIn("Общая площадь: больше 1e308", console.transcript)
+
 
 class FileTests(MenuTestCase):
     def test_save_then_load_in_new_session(self) -> None:
