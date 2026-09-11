@@ -61,8 +61,8 @@ mtp-lab-3/
 └── README.md
 ```
 
-Классы и связи между ними (`*` — абстрактный метод, `$` — статический метод или
-метод класса):
+Классы и связи между ними (курсив — абстрактный метод, подчёркивание — статический
+метод или метод класса; `#95;` в исходном тексте диаграммы — экранированный символ `_`):
 
 ```mermaid
 classDiagram
@@ -102,10 +102,10 @@ classDiagram
     class Drawing {
         +add(shape)
         +total_area() float
-        +__iter__() DrawingIterator
+        +#95;#95;iter#95;#95;() DrawingIterator
     }
     class DrawingIterator {
-        +__next__() Shape
+        +#95;#95;next#95;#95;() Shape
     }
     class JsonSerializer {
         +register(cls)
