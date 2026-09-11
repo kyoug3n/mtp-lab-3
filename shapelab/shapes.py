@@ -11,6 +11,7 @@
 
 Средн. 6 — статический метод :meth:`Triangle.is_valid`.
 """
+import inspect
 import math
 from abc import abstractmethod
 from fractions import Fraction
@@ -47,6 +48,9 @@ class Shape(Serializable):
     унаследованного контракта :class:`Serializable` реализованы здесь, в
     ``Shape``, один раз для всех фигур.
 
+    Контракт проверяется при объявлении конкретного наследника (см.
+    :meth:`__init_subclass__`), а не при первой записи в JSON.
+
     >>> Shape()  # doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
@@ -55,6 +59,49 @@ class Shape(Serializable):
 
     NAME: ClassVar[str]
     SIZE_LABELS: ClassVar[dict[str, str]]
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Проверить контракт конкретного наследника при объявлении класса.
+
+        На ``SIZE_LABELS`` держатся ``sizes()``, ``repr``, сравнение, вопросы
+        меню и ``from_dict``, который создаёт фигуру вызовом
+        ``cls(**размеры)``. Поэтому имена из ``SIZE_LABELS`` должны в
+        точности совпадать с параметрами конструктора, и для каждого имени
+        нужно свойство. Наследник, добавивший параметр в конструктор, но не
+        в ``SIZE_LABELS``, иначе молча терял бы этот параметр при записи в
+        JSON — здесь это ``TypeError`` сразу при объявлении класса.
+        Абстрактные наследники не проверяются: их объекты не создаются.
+
+        >>> class ColoredCircle(Circle):  # doctest: +ELLIPSIS
+        ...     def __init__(self, radius: float, color: str) -> None:
+        ...         super().__init__(radius)
+        ...         self.color = color
+        Traceback (most recent call last):
+        ...
+        TypeError: ColoredCircle: параметры конструктора (radius, color) ...
+        """
+        super().__init_subclass__(**kwargs)
+        if inspect.isabstract(cls):
+            return
+        for attribute in ("NAME", "SIZE_LABELS"):
+            if not hasattr(cls, attribute):
+                raise TypeError(f"{cls.__name__}: не задан атрибут класса "
+                                f"{attribute}")
+        parameters = inspect.signature(cls).parameters
+        by_keyword = (inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                      inspect.Parameter.KEYWORD_ONLY)
+        if (set(parameters) != set(cls.SIZE_LABELS)
+                or any(parameter.kind not in by_keyword
+                       for parameter in parameters.values())):
+            raise TypeError(
+                f"{cls.__name__}: параметры конструктора "
+                f"({', '.join(parameters)}) не совпадают с SIZE_LABELS "
+                f"({', '.join(cls.SIZE_LABELS)})"
+            )
+        for name in cls.SIZE_LABELS:
+            if not isinstance(getattr(cls, name, None), property):
+                raise TypeError(f"{cls.__name__}: для размера {name} нет "
+                                "свойства")
 
     @abstractmethod
     def area(self) -> float:

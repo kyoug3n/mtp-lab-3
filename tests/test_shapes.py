@@ -1,9 +1,17 @@
 """Тесты фигур (Средн. 4) и абстрактного класса Shape (Повыш. 9)."""
+import inspect
 import math
 import random
 import unittest
 
-from shapelab.shapes import Circle, Rectangle, Shape, Square, format_number
+from shapelab.shapes import (
+    Circle,
+    Rectangle,
+    Shape,
+    Square,
+    Triangle,
+    format_number,
+)
 
 
 class AbstractShapeTests(unittest.TestCase):
@@ -45,6 +53,81 @@ class AbstractShapeTests(unittest.TestCase):
         for shape in (Circle(1), Rectangle(1, 2), Square(3)):
             with self.subTest(shape=shape):
                 self.assertIsInstance(shape, Shape)
+
+
+class SubclassContractTests(unittest.TestCase):
+    """Контракт SIZE_LABELS проверяется при объявлении класса фигуры."""
+
+    def test_real_shapes_follow_the_contract(self) -> None:
+        for cls in (Circle, Rectangle, Square, Triangle):
+            with self.subTest(cls=cls):
+                parameters = list(inspect.signature(cls).parameters)
+                self.assertEqual(parameters, list(cls.SIZE_LABELS))
+
+    def test_extra_constructor_parameter(self) -> None:
+        # Без проверки цвет молча терялся бы при записи в JSON.
+        with self.assertRaisesRegex(
+            TypeError, r"^ColoredCircle: параметры конструктора "
+                       r"\(radius, color\) не совпадают с SIZE_LABELS "
+                       r"\(radius\)$"
+        ):
+            class ColoredCircle(Circle):
+                def __init__(self, radius: float, color: str) -> None:
+                    super().__init__(radius)
+                    self.color = color
+
+    def test_label_without_constructor_parameter(self) -> None:
+        with self.assertRaisesRegex(TypeError, "не совпадают с SIZE_LABELS"):
+            class LabelledSquare(Square):
+                SIZE_LABELS = {"side": "сторона", "color": "цвет"}
+
+    def test_positional_only_parameter(self) -> None:
+        # from_dict передаёт размеры по именам: cls(**data).
+        with self.assertRaisesRegex(TypeError, "не совпадают с SIZE_LABELS"):
+            class PositionalCircle(Circle):
+                def __init__(self, radius: float, /) -> None:
+                    super().__init__(radius)
+
+    def test_size_without_property(self) -> None:
+        with self.assertRaisesRegex(TypeError, "для размера side нет"):
+            class Plain(Shape):
+                NAME = "фигура без свойства"
+                SIZE_LABELS = {"side": "сторона"}
+
+                def __init__(self, side: float) -> None:
+                    self._side = side
+
+                def area(self) -> float:
+                    return 1.0
+
+                def perimeter(self) -> float:
+                    return 1.0
+
+    def test_missing_class_attributes(self) -> None:
+        with self.assertRaisesRegex(TypeError, "не задан атрибут класса NAME"):
+            class Nameless(Shape):
+                SIZE_LABELS: dict[str, str] = {}
+
+                def area(self) -> float:
+                    return 1.0
+
+                def perimeter(self) -> float:
+                    return 1.0
+
+    def test_abstract_subclasses_are_not_checked(self) -> None:
+        class StillAbstract(Shape):
+            def extra(self, colour: str) -> str:
+                return colour
+
+        self.assertTrue(inspect.isabstract(StillAbstract))
+
+    def test_correct_subclass_round_trips(self) -> None:
+        class Coin(Circle):
+            NAME = "монета"
+
+        coin = Coin(1)
+        self.assertEqual(Coin.from_dict(coin.to_dict()), coin)
+        self.assertEqual(coin.describe()[:6], "Монета")
 
 
 class MeasureTests(unittest.TestCase):
