@@ -87,13 +87,32 @@ class Drawing(Serializable):
     def __iter__(self) -> "DrawingIterator":
         return DrawingIterator(self)
 
+    def _shape_at(self, index: int) -> Shape | None:
+        """Фигура номер ``index`` или ``None``, если фигур меньше.
+
+        Внутренний интерфейс для :class:`DrawingIterator`: итератор не
+        знает, как чертёж хранит фигуры.
+        """
+        if index < len(self._shapes):
+            return self._shapes[index]
+        return None
+
+    def _current_version(self) -> int:
+        """Номер последнего изменения — для :class:`DrawingIterator`."""
+        return self._version
+
     def __len__(self) -> int:
         return len(self._shapes)
 
     def __eq__(self, other: object) -> bool:
+        """Чертежи равны, если равны их фигуры по порядку.
+
+        Фигуры другого чертежа берутся его же итератором, а не из его
+        защищённого списка.
+        """
         if not isinstance(other, Drawing):
             return NotImplemented
-        return self._shapes == other._shapes
+        return list(self) == list(other)
 
     def __repr__(self) -> str:
         return f"Drawing({self._shapes!r})"
@@ -102,13 +121,13 @@ class Drawing(Serializable):
 class DrawingIterator:
     """Итератор по фигурам чертежа.
 
-    Итератор читает защищённые атрибуты чертежа: оба класса — части одной
-    структуры данных и описаны в одном модуле.
+    С чертежом итератор общается только через два внутренних метода —
+    ``_shape_at`` и ``_current_version``, — а не через его атрибуты.
     """
 
     def __init__(self, drawing: Drawing) -> None:
         self._drawing = drawing
-        self._version = drawing._version
+        self._version = drawing._current_version()
         self._index = 0
         self._finished = False
 
@@ -127,12 +146,11 @@ class DrawingIterator:
         """
         if self._finished:
             raise StopIteration
-        if self._drawing._version != self._version:
+        if self._drawing._current_version() != self._version:
             raise RuntimeError("Чертёж изменился во время обхода")
-        shapes = self._drawing._shapes
-        if self._index >= len(shapes):
+        shape = self._drawing._shape_at(self._index)
+        if shape is None:
             self._finished = True
             raise StopIteration
-        shape = shapes[self._index]
         self._index += 1
         return shape

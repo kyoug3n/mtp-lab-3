@@ -284,16 +284,20 @@ class Circle(Shape):
 ```python
         if self._finished:
             raise StopIteration
-        if self._drawing._version != self._version:
+        if self._drawing._current_version() != self._version:
             raise RuntimeError("Чертёж изменился во время обхода")
-        shapes = self._drawing._shapes
-        if self._index >= len(shapes):
+        shape = self._drawing._shape_at(self._index)
+        if shape is None:
             self._finished = True
             raise StopIteration
-        shape = shapes[self._index]
         self._index += 1
         return shape
 ```
+
+С чертежом итератор общается только через два внутренних метода — `_shape_at(index)`
+и `_current_version()`, — а не читает его атрибуты: как чертёж хранит фигуры, итератор
+не знает (тест подставляет ему объект, который вообще не хранит фигур, а создаёт их на
+лету). Сравнение чертежей `__eq__` тоже берёт фигуры другого чертежа его итератором.
 
 Почему два класса, а не один с `__iter__`, возвращающим `self`: итератор помнит
 позицию и поэтому одноразовый, а чертёж можно обходить сколько угодно раз, в том числе
@@ -303,8 +307,8 @@ class Circle(Shape):
   добавили фигуры, — так требует протокол;
 - изменение чертежа во время обхода — `RuntimeError`, как у словаря
   (`dictionary changed size during iteration`), иначе добавленные фигуры попадали бы в
-  обход непредсказуемо. Для этого чертёж считает изменения (`_version`), а итератор
-  сверяет номер.
+  обход непредсказуемо. Для этого чертёж считает изменения, а итератор сверяет номер
+  через `_current_version()`.
 
 На этом протоколе работают `for`, `list()`, `max()`, `in`, распаковка
 `first, *_, last = drawing` — всё это проверено тестами. Меню выводит чертёж обычным

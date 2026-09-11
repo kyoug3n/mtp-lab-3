@@ -21,6 +21,19 @@ class IterationProtocolTests(unittest.TestCase):
         with self.assertRaises(StopIteration):
             next(iterator)
 
+    def test_iterator_uses_only_internal_interface(self) -> None:
+        # Итератору достаточно методов _shape_at и _current_version:
+        # как чертёж хранит фигуры, он не знает.
+        class NumberedCircles:
+            def _shape_at(self, index: int) -> Circle | None:
+                return Circle(index + 1) if index < 3 else None
+
+            def _current_version(self) -> int:
+                return 0
+
+        iterator = DrawingIterator(NumberedCircles())  # type: ignore[arg-type]
+        self.assertEqual(list(iterator), [Circle(1), Circle(2), Circle(3)])
+
     def test_for_loop_keeps_order(self) -> None:
         visited = []
         for shape in Drawing(SHAPES):
