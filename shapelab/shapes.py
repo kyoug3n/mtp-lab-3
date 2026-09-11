@@ -8,9 +8,12 @@
 Размеры хранятся в защищённых атрибутах и доступны только через свойства
 без записи, поэтому фигура после создания не меняется: проверки
 конструктора нельзя обойти, а фигуры можно сравнивать и класть в множества.
+
+Средн. 6 — статический метод :meth:`Triangle.is_valid`.
 """
 import math
 from abc import ABC, abstractmethod
+from fractions import Fraction
 from typing import ClassVar
 
 Number = int | float
@@ -231,3 +234,113 @@ class Square(Rectangle):
     def side(self) -> Number:
         """Сторона квадрата."""
         return self.width
+
+
+class Triangle(Shape):
+    """Треугольник по трём сторонам.
+
+    Средн. 6: :meth:`is_valid` — статический метод. Проверить, существует ли
+    треугольник с такими сторонами, можно до создания объекта; этим же
+    методом пользуется конструктор.
+
+    >>> Triangle.is_valid(3, 4, 5), Triangle.is_valid(1, 2, 3)
+    (True, False)
+    >>> triangle = Triangle(3, 4, 5)
+    >>> triangle.area(), triangle.perimeter()
+    (6.0, 12.0)
+    >>> Triangle(1, 2, 10)
+    Traceback (most recent call last):
+    ...
+    ValueError: Из сторон 1, 2, 10 треугольник не построить: 10 ≥ 1 + 2
+    """
+
+    NAME = "треугольник"
+    SIZE_LABELS = {"a": "сторона a", "b": "сторона b", "c": "сторона c"}
+
+    def __init__(self, a: Number, b: Number, c: Number) -> None:
+        for side, label in zip((a, b, c), self.SIZE_LABELS.values()):
+            self.check_length(side, label)
+        # Статический метод вызывается и через объект, и через класс.
+        if not self.is_valid(a, b, c):
+            given = ", ".join(format_number(side, 12) for side in (a, b, c))
+            small, middle, large = (
+                format_number(side, 12) for side in sorted((a, b, c))
+            )
+            raise ValueError(f"Из сторон {given} треугольник не построить: "
+                             f"{large} ≥ {small} + {middle}")
+        self._a, self._b, self._c = a, b, c
+        self._check_measures()
+
+    @staticmethod
+    def is_valid(a: object, b: object, c: object) -> bool:
+        """Можно ли построить треугольник со сторонами ``a``, ``b``, ``c``.
+
+        Стороны должны быть числами больше нуля, а наибольшая — строго
+        меньше суммы двух других (равенство — вырожденный треугольник,
+        отрезок). Сравнение точное: через :class:`~fractions.Fraction`,
+        без ошибок округления ``float``. Для неподходящих значений
+        (строки, ``bool``, ноль, ``nan``) метод возвращает ``False``,
+        а не бросает исключение.
+
+        >>> Triangle.is_valid(5, 3, 4), Triangle.is_valid(0, 1, 1)
+        (True, False)
+        >>> Triangle.is_valid("3", 4, 5), Triangle.is_valid(True, 1, 1)
+        (False, False)
+
+        Числа 0.1, 0.2 и 0.3 во ``float`` хранятся приближённо, и сумма
+        первых двух чуть больше третьего. Поэтому для ``float`` это не
+        отрезок, а очень тонкий треугольник:
+
+        >>> 0.1 + 0.2 > 0.3, Triangle.is_valid(0.1, 0.2, 0.3)
+        (True, True)
+        """
+        try:
+            for side in (a, b, c):
+                Shape.check_length(side, "сторона")
+        except (TypeError, ValueError):
+            return False
+        small, middle, large = sorted(
+            Fraction(side) for side in (a, b, c)  # type: ignore[arg-type]
+        )
+        return large - middle < small
+
+    @property
+    def a(self) -> Number:
+        """Сторона a."""
+        return self._a
+
+    @property
+    def b(self) -> Number:
+        """Сторона b."""
+        return self._b
+
+    @property
+    def c(self) -> Number:
+        """Сторона c."""
+        return self._c
+
+    def area(self) -> float:
+        """Площадь по формуле Герона в устойчивой записи Кэхэна.
+
+        Обычная запись ``sqrt(p(p - a)(p - b)(p - c))`` теряет точность у
+        «игольчатых» треугольников: ``p`` почти равно длинной стороне, и
+        разность ``p - a`` вычисляется с большой относительной ошибкой.
+        Здесь стороны упорядочены (``a ≥ b ≥ c``), и скобки расставлены так,
+        что вычитаются только близкие числа — такая разность точна. Корень
+        берётся из каждого множителя отдельно, чтобы произведение не
+        переполнялось раньше, чем сама площадь.
+
+        У тонкого треугольника 0.1, 0.2, 0.3 точная площадь 2.8856e-10,
+        а обычная запись даёт 5.7712e-10 — вдвое больше:
+
+        >>> Triangle(0.1, 0.2, 0.3).area()
+        2.8855974571462107e-10
+        """
+        a, b, c = sorted(
+            (float(self._a), float(self._b), float(self._c)), reverse=True
+        )
+        return (0.25 * math.sqrt(a + (b + c)) * math.sqrt(c - (a - b))
+                * math.sqrt(c + (a - b)) * math.sqrt(a + (b - c)))
+
+    def perimeter(self) -> float:
+        return float(self._a) + float(self._b) + float(self._c)
